@@ -87,20 +87,70 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-xl">
-          {/* Hero */}
-          <div className="text-center mb-12">
-            <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
-              Payment links for
-              <br />
-              <span className="text-accent">vibe coders</span>
-            </h1>
-            <p className="text-white/60 text-lg">
-              No accounts. No dashboards. Just vibes.
-            </p>
+        <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-12 lg:gap-16 items-start">
+
+          {/* Left Side - Instructions */}
+          <div className="w-full lg:w-80 lg:flex-shrink-0 order-2 lg:order-1">
+            <div className="lg:sticky lg:top-8">
+              <h2 className="font-display text-xl font-bold mb-4 text-accent">How it works</h2>
+
+              <div className="space-y-6 text-sm">
+                <div>
+                  <div className="text-white/80 font-medium mb-1">⚡ First time?</div>
+                  <p className="text-white/50">
+                    You&apos;ll create a Stripe account (~5 mins). We never see your Stripe data — payments go directly to you.
+                  </p>
+                </div>
+
+                <div>
+                  <div className="text-white/80 font-medium mb-2">3 ways to monetize:</div>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <span className="text-accent font-bold">1.</span>
+                      <p className="text-white/50">
+                        <span className="text-white/70">Share the link</span> — get a unique payment URL to share anywhere
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-accent font-bold">2.</span>
+                      <p className="text-white/50">
+                        <span className="text-white/70">Embed a button</span> — drop a code snippet into any site or app
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-accent font-bold">3.</span>
+                      <p className="text-white/50">
+                        <span className="text-white/70">Protect a download</span> — paywall any file link (Google Drive, Dropbox, etc.)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/10">
+                  <div className="text-white/80 font-medium mb-1">🤖 Works with vibe coders</div>
+                  <p className="text-white/50">
+                    Cursor, Replit, Bolt, Lovable — just paste the embed code and ship.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Form */}
+          {/* Right Side - Form */}
+          <div className="w-full lg:flex-1 max-w-xl order-1 lg:order-2">
+            {/* Hero */}
+            <div className="text-center lg:text-left mb-12">
+              <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
+                Payment links for
+                <br />
+                <span className="text-accent">vibe coders</span>
+              </h1>
+              <p className="text-white/60 text-lg">
+                No accounts. No dashboards. Just vibes.
+              </p>
+            </div>
+
+            {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 text-sm">
@@ -246,12 +296,13 @@ export default function Home() {
               {isLoading ? "Connecting..." : "Connect Stripe & Create →"}
             </button>
 
-            <p className="text-xs text-white/40 text-center">
+            <p className="text-xs text-white/40 text-center lg:text-left">
               You&apos;ll be redirected to Stripe to connect your account.
               <br />
               Returning users: Stripe remembers you — instant creation.
             </p>
           </form>
+          </div>
         </div>
       </div>
 

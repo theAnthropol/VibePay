@@ -1,10 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 
-export default function PendingPage() {
+function PendingContent() {
   const searchParams = useSearchParams();
   const accountId = searchParams.get("account_id");
   const formParam = searchParams.get("form");
@@ -126,5 +126,24 @@ export default function PendingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="card text-center max-w-md">
+        <div className="text-4xl mb-4 animate-pulse">⏳</div>
+        <h1 className="font-display text-xl font-bold">Loading...</h1>
+      </div>
+    </div>
+  );
+}
+
+export default function PendingPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PendingContent />
+    </Suspense>
   );
 }
