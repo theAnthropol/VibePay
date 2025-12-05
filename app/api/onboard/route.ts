@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getStripe } from "@/lib/stripe";
 import { getRequestContext } from "@cloudflare/next-on-pages";
 
@@ -37,7 +36,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Store form data in httpOnly cookie (expires in 1 hour)
+    // Store form data for later use via query params
     const formData = {
       name: name.trim(),
       priceInCents,
@@ -45,18 +44,9 @@ export async function POST(request: NextRequest) {
       email: email?.trim() || null,
     };
 
-    const cookieStore = await cookies();
-    cookieStore.set("vibepay_form", JSON.stringify(formData), {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      maxAge: 60 * 60, // 1 hour
-      path: "/",
-    });
-
     const stripe = getStripe();
     const env = getRequestContext().env as Record<string, unknown>;
-    const appUrl = (env.NEXT_PUBLIC_APP_URL as string) || "https://vibepay.io";
+    const appUrl = (env.NEXT_PUBLIC_APP_URL as string) || "https://vibepay.pages.dev";
 
     // Create Stripe Connect account
     const account = await stripe.accounts.create({
@@ -64,11 +54,14 @@ export async function POST(request: NextRequest) {
       email: email?.trim() || undefined,
     });
 
+    // Encode form data in URL for callback
+    const encodedFormData = encodeURIComponent(JSON.stringify(formData));
+
     // Create account link for onboarding
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
-      refresh_url: `${appUrl}/api/onboard/refresh?account_id=${account.id}`,
-      return_url: `${appUrl}/api/callback?account_id=${account.id}`,
+      refresh_url: `${appUrl}/api/onboard/refresh?account_id=${account.id}&form=${encodedFormData}`,
+      return_url: `${appUrl}/api/callback?account_id=${account.id}&form=${encodedFormData}`,
       type: "account_onboarding",
     });
 
