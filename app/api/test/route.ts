@@ -1,23 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
-  try {
-    const env = getRequestContext().env as Record<string, unknown>;
+  // Step 1: Basic test
+  let result: Record<string, unknown> = { step1: "ok" };
 
-    return NextResponse.json({
-      status: "ok",
-      hasStripeKey: !!env.STRIPE_SECRET_KEY,
-      hasWebhookSecret: !!env.STRIPE_WEBHOOK_SECRET,
-      hasDB: !!env.DB,
-      appUrl: env.NEXT_PUBLIC_APP_URL || "not set",
-    });
-  } catch (error) {
-    return NextResponse.json({
-      status: "error",
-      message: error instanceof Error ? error.message : "Unknown error",
-    }, { status: 500 });
+  // Step 2: Try to import getRequestContext
+  try {
+    const { getRequestContext } = await import("@cloudflare/next-on-pages");
+    result.step2 = "import ok";
+
+    // Step 3: Try to call getRequestContext
+    try {
+      const ctx = getRequestContext();
+      result.step3 = "context ok";
+
+      // Step 4: Check env
+      const env = ctx.env as Record<string, unknown>;
+      result.step4 = "env ok";
+      result.hasStripeKey = !!env.STRIPE_SECRET_KEY;
+      result.hasWebhookSecret = !!env.STRIPE_WEBHOOK_SECRET;
+      result.hasDB = !!env.DB;
+      result.envKeys = Object.keys(env);
+    } catch (e) {
+      result.step3_error = e instanceof Error ? e.message : String(e);
+    }
+  } catch (e) {
+    result.step2_error = e instanceof Error ? e.message : String(e);
   }
+
+  return NextResponse.json(result);
 }
