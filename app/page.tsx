@@ -6,7 +6,7 @@ import Link from "next/link";
 export default function Home() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [destinationUrl, setDestinationUrl] = useState("");
+  const [destinationUrl, setDestinationUrl] = useState("https://");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -20,7 +20,7 @@ export default function Home() {
   const isValid =
     name.trim() &&
     priceNum >= 2 &&
-    destinationUrl.trim() &&
+    destinationUrl.trim().length > 8 &&
     (destinationUrl.startsWith("http://") ||
       destinationUrl.startsWith("https://"));
 
