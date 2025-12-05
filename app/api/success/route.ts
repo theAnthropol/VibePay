@@ -42,21 +42,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(product.destination_url);
     }
 
-    // Verify payment was successful (optional but recommended)
+    // Verify payment was successful (required)
     const stripe = getStripe();
-    try {
-      const session = await stripe.checkout.sessions.retrieve(sessionId, {
-        stripeAccount: product.stripe_account_id,
-      });
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      stripeAccount: product.stripe_account_id,
+    });
 
-      if (session.payment_status !== "paid") {
-        return NextResponse.redirect(
-          new URL(`/pay/${productId}?error=payment_not_confirmed`, appUrl)
-        );
-      }
-    } catch (err) {
-      console.error("Failed to verify session:", err);
-      // Continue anyway - token generation is the main security
+    if (session.payment_status !== "paid") {
+      return NextResponse.redirect(
+        new URL(`/pay/${productId}?error=payment_not_confirmed`, appUrl)
+      );
     }
 
     // Check if we already created a token for this session (idempotency)
