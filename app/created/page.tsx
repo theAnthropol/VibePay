@@ -14,10 +14,9 @@ interface Product {
 export default async function CreatedPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string }>;
+  searchParams: { id?: string };
 }) {
-  const params = await searchParams;
-  const productId = params.id;
+  const productId = searchParams.id;
 
   if (!productId) {
     redirect("/");

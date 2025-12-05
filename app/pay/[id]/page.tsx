@@ -15,18 +15,15 @@ export default async function PayPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ canceled?: string }>;
+  params: { id: string };
+  searchParams: { canceled?: string };
 }) {
-  const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
-
   const env = getRequestContext().env as Record<string, unknown>;
   const db = env.DB as D1Database;
 
   const product = await db
     .prepare("SELECT id, name, price_in_cents, is_active FROM products WHERE id = ?")
-    .bind(resolvedParams.id)
+    .bind(params.id)
     .first<Product>();
 
   if (!product) {
@@ -49,7 +46,7 @@ export default async function PayPage({
   }
 
   const priceFormatted = (product.price_in_cents / 100).toFixed(2);
-  const canceled = resolvedSearchParams.canceled === "true";
+  const canceled = searchParams.canceled === "true";
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
