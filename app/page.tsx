@@ -7,6 +7,8 @@ export default function Home() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [destinationUrl, setDestinationUrl] = useState("https://");
+  const [protectedUrl, setProtectedUrl] = useState("");
+  const [useProtection, setUseProtection] = useState(false);
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,12 +19,15 @@ export default function Home() {
   const vibePayFee = priceNum * 0.05;
   const youGet = priceNum - stripeFee - vibePayFee;
 
+  const isValidUrl = (url: string) =>
+    url.trim().length > 8 &&
+    (url.startsWith("http://") || url.startsWith("https://"));
+
   const isValid =
     name.trim() &&
     priceNum >= 2 &&
-    destinationUrl.trim().length > 8 &&
-    (destinationUrl.startsWith("http://") ||
-      destinationUrl.startsWith("https://"));
+    isValidUrl(destinationUrl) &&
+    (!useProtection || isValidUrl(protectedUrl));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,6 +44,7 @@ export default function Home() {
           name: name.trim(),
           priceInCents: Math.round(priceNum * 100),
           destinationUrl: destinationUrl.trim(),
+          protectedUrl: useProtection ? protectedUrl.trim() : null,
           email: email.trim() || null,
         }),
       });
@@ -139,16 +145,60 @@ export default function Home() {
 
             <div>
               <label className="block text-sm text-white/60 mb-2">
-                Destination URL — where buyers go after payment
+                {useProtection
+                  ? "Thank you page — shown after payment"
+                  : "Destination URL — where buyers go after payment"}
               </label>
               <input
                 type="url"
                 value={destinationUrl}
                 onChange={(e) => setDestinationUrl(e.target.value)}
-                placeholder="https://your-content.com/download"
+                placeholder={
+                  useProtection
+                    ? "https://your-site.com/thank-you"
+                    : "https://your-content.com/download"
+                }
                 className="input-field"
                 required
               />
+            </div>
+
+            {/* Link Protection Toggle */}
+            <div className="card">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useProtection}
+                  onChange={(e) => setUseProtection(e.target.checked)}
+                  className="mt-1 w-4 h-4 accent-accent"
+                />
+                <div>
+                  <span className="font-medium">Protect a file link</span>
+                  <p className="text-sm text-white/50 mt-1">
+                    Hide your Google Drive, Dropbox, or any file URL behind a
+                    paywall. Buyers get a secure, time-limited access link.
+                  </p>
+                </div>
+              </label>
+
+              {useProtection && (
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <label className="block text-sm text-white/60 mb-2">
+                    Protected file URL — hidden until payment
+                  </label>
+                  <input
+                    type="url"
+                    value={protectedUrl}
+                    onChange={(e) => setProtectedUrl(e.target.value)}
+                    placeholder="https://drive.google.com/file/d/..."
+                    className="input-field"
+                  />
+                  <p className="text-xs text-white/40 mt-2">
+                    This URL is never exposed. After payment, buyers get a
+                    unique link that expires in 24 hours.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>

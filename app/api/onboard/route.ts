@@ -6,8 +6,8 @@ export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as { name?: string; priceInCents?: number; destinationUrl?: string; email?: string };
-    const { name, priceInCents, destinationUrl, email } = body;
+    const body = await request.json() as { name?: string; priceInCents?: number; destinationUrl?: string; protectedUrl?: string; email?: string };
+    const { name, priceInCents, destinationUrl, protectedUrl, email } = body;
 
     // Validate inputs
     if (!name || typeof name !== "string" || name.trim().length === 0) {
@@ -36,11 +36,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate protected URL if provided
+    if (
+      protectedUrl &&
+      typeof protectedUrl === "string" &&
+      !protectedUrl.startsWith("http://") &&
+      !protectedUrl.startsWith("https://")
+    ) {
+      return NextResponse.json(
+        { error: "Protected URL must be a valid URL (http:// or https://)" },
+        { status: 400 }
+      );
+    }
+
     // Store form data for later use via query params
     const formData = {
       name: name.trim(),
       priceInCents,
       destinationUrl: destinationUrl.trim(),
+      protectedUrl: protectedUrl?.trim() || null,
       email: email?.trim() || null,
     };
 

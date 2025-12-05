@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/?error=invalid_form_data", appUrl));
     }
 
-    const { name, priceInCents, destinationUrl, email } = formData;
+    const { name, priceInCents, destinationUrl, protectedUrl, email } = formData;
 
     // Validate form data
     if (!name || !priceInCents || !destinationUrl) {
@@ -57,10 +57,10 @@ export async function GET(request: NextRequest) {
 
     await db
       .prepare(
-        `INSERT INTO products (id, stripe_account_id, name, price_in_cents, destination_url, creator_email)
-         VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO products (id, stripe_account_id, name, price_in_cents, destination_url, protected_url, creator_email)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
       )
-      .bind(productId, accountId, name, priceInCents, destinationUrl, email)
+      .bind(productId, accountId, name, priceInCents, destinationUrl, protectedUrl || null, email)
       .run();
 
     // Redirect to success page

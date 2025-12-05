@@ -38,6 +38,11 @@ export async function POST(request: NextRequest) {
     // Calculate platform fee (5%)
     const applicationFee = calculatePlatformFee(product.price_in_cents);
 
+    // Determine success URL - use our handler for protected products
+    const successUrl = product.protected_url
+      ? `${appUrl}/api/success?product_id=${productId}&session_id={CHECKOUT_SESSION_ID}`
+      : product.destination_url;
+
     // Create Checkout Session
     const session = await stripe.checkout.sessions.create(
       {
@@ -57,7 +62,7 @@ export async function POST(request: NextRequest) {
         payment_intent_data: {
           application_fee_amount: applicationFee,
         },
-        success_url: product.destination_url,
+        success_url: successUrl,
         cancel_url: `${appUrl}/pay/${productId}?canceled=true`,
       },
       {

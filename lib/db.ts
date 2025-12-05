@@ -7,6 +7,7 @@ export interface Product {
   name: string;
   price_in_cents: number;
   destination_url: string;
+  protected_url: string | null; // If set, destination_url is thank-you page, this is the actual content
   creator_email: string | null;
   is_active: number; // SQLite uses 0/1 for boolean
   created_at: string;
