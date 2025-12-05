@@ -85,7 +85,7 @@ export default async function CreatedPage({
             {/* Embed Code */}
             <div className="card">
               <label className="block text-sm text-white/60 mb-2">
-                Embed Code
+                Embed Code — paste into your website
               </label>
               <div className="flex gap-2">
                 <input
@@ -97,8 +97,47 @@ export default async function CreatedPage({
                 <CopyButton text={embedCode} />
               </div>
               <p className="text-xs text-white/40 mt-2">
-                Add this to your website to create a buy button.
+                Creates a &quot;Buy {product.name}&quot; button with price.
               </p>
+
+              {/* Embed Options */}
+              <details className="mt-4">
+                <summary className="text-xs text-white/50 cursor-pointer hover:text-white/70">
+                  Customize button (themes & sizes)
+                </summary>
+                <div className="mt-3 space-y-3 text-xs">
+                  <div>
+                    <span className="text-white/40">Dark theme (default):</span>
+                    <code className="block bg-white/5 p-2 mt-1 rounded font-mono break-all">
+                      {`<script src="${appUrl}/embed.js" data-vibepay-id="${product.id}"></script>`}
+                    </code>
+                  </div>
+                  <div>
+                    <span className="text-white/40">Light theme:</span>
+                    <code className="block bg-white/5 p-2 mt-1 rounded font-mono break-all">
+                      {`<script src="${appUrl}/embed.js" data-vibepay-id="${product.id}" data-theme="light"></script>`}
+                    </code>
+                  </div>
+                  <div>
+                    <span className="text-white/40">Accent theme:</span>
+                    <code className="block bg-white/5 p-2 mt-1 rounded font-mono break-all">
+                      {`<script src="${appUrl}/embed.js" data-vibepay-id="${product.id}" data-theme="accent"></script>`}
+                    </code>
+                  </div>
+                  <div>
+                    <span className="text-white/40">Custom text:</span>
+                    <code className="block bg-white/5 p-2 mt-1 rounded font-mono break-all">
+                      {`<script src="${appUrl}/embed.js" data-vibepay-id="${product.id}" data-text="Get Access"></script>`}
+                    </code>
+                  </div>
+                  <div>
+                    <span className="text-white/40">Sizes: small, medium, large</span>
+                    <code className="block bg-white/5 p-2 mt-1 rounded font-mono break-all">
+                      {`<script src="${appUrl}/embed.js" data-vibepay-id="${product.id}" data-size="large"></script>`}
+                    </code>
+                  </div>
+                </div>
+              </details>
             </div>
 
             {/* Stripe Dashboard Link */}
