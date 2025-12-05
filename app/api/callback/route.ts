@@ -42,17 +42,13 @@ export async function GET(request: NextRequest) {
     // Verify the Stripe account
     const account = await stripe.accounts.retrieve(accountId);
 
-    // Check if charges are enabled - if not, redirect to complete onboarding
+    // Check if charges are enabled - if not, show pending page
     if (!account.charges_enabled) {
-      // Re-encode form data for the redirect
+      // Instead of auto-redirecting (which causes loops), send to a pending page
       const encodedFormData = encodeURIComponent(JSON.stringify(formData));
-      const accountLink = await stripe.accountLinks.create({
-        account: accountId,
-        refresh_url: `${appUrl}/api/onboard/refresh?account_id=${accountId}&form=${encodedFormData}`,
-        return_url: `${appUrl}/api/callback?account_id=${accountId}&form=${encodedFormData}`,
-        type: "account_onboarding",
-      });
-      return NextResponse.redirect(accountLink.url);
+      return NextResponse.redirect(
+        new URL(`/pending?account_id=${accountId}&form=${encodedFormData}`, appUrl)
+      );
     }
 
     // Create product in D1 database
