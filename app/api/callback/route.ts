@@ -42,14 +42,21 @@ export async function GET(request: NextRequest) {
     // Verify the Stripe account
     const account = await stripe.accounts.retrieve(accountId);
 
-    // Check if charges are enabled - if not, show pending page
-    if (!account.charges_enabled) {
-      // Instead of auto-redirecting (which causes loops), send to a pending page
+    // For Standard accounts, details_submitted means they completed onboarding
+    // charges_enabled may take a moment to become true after linking existing account
+    const isReady = account.details_submitted;
+
+    // If not ready, show pending page
+    if (!isReady) {
       const encodedFormData = encodeURIComponent(JSON.stringify(formData));
       return NextResponse.redirect(
         new URL(`/pending?account_id=${accountId}&form=${encodedFormData}`, appUrl)
       );
     }
+
+    // If details submitted but charges not enabled, still proceed but warn
+    // This can happen with new accounts that need Stripe review
+    const needsReview = !account.charges_enabled;
 
     // Create product in D1 database
     const db = getDB();
@@ -63,8 +70,11 @@ export async function GET(request: NextRequest) {
       .bind(productId, accountId, name, priceInCents, destinationUrl, protectedUrl || null, email)
       .run();
 
-    // Redirect to success page
-    return NextResponse.redirect(new URL(`/created?id=${productId}`, appUrl));
+    // Redirect to success page (with review flag if needed)
+    const successUrl = needsReview
+      ? `/created?id=${productId}&review=pending`
+      : `/created?id=${productId}`;
+    return NextResponse.redirect(new URL(successUrl, appUrl));
   } catch (error) {
     console.error("Callback error:", error);
     return NextResponse.redirect(new URL("/?error=callback_failed", appUrl));

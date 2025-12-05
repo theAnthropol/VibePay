@@ -31,6 +31,16 @@ export async function POST(request: NextRequest) {
 
     const stripe = getStripe();
 
+    // First check if account is actually ready
+    const account = await stripe.accounts.retrieve(accountId);
+    if (account.details_submitted) {
+      // Account is ready, return callback URL directly
+      return NextResponse.json({
+        url: `${appUrl}/api/callback?account_id=${accountId}&form=${form}`,
+        ready: true,
+      });
+    }
+
     // Create a new account link for the existing account
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
@@ -39,7 +49,7 @@ export async function POST(request: NextRequest) {
       type: "account_onboarding",
     });
 
-    return NextResponse.json({ url: accountLink.url });
+    return NextResponse.json({ url: accountLink.url, ready: false });
   } catch (error) {
     console.error("Retry error:", error);
     const errorMessage =

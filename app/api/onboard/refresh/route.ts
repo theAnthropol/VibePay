@@ -24,7 +24,16 @@ export async function GET(request: NextRequest) {
 
     const stripe = getStripe();
 
-    // Create a new account link for the same account, preserving form data
+    // First check if account is actually ready - if so, go to callback directly
+    const account = await stripe.accounts.retrieve(accountId);
+    if (account.details_submitted) {
+      // Account is ready, skip re-onboarding and go to callback
+      return NextResponse.redirect(
+        new URL(`/api/callback?account_id=${accountId}&form=${formParam}`, appUrl)
+      );
+    }
+
+    // Account not ready, create a new account link
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: `${appUrl}/api/onboard/refresh?account_id=${accountId}&form=${formParam}`,
