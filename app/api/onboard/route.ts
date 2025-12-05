@@ -75,8 +75,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: accountLink.url });
   } catch (error) {
     console.error("Onboard error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to start onboarding" },
+      { error: `Failed to start onboarding: ${errorMessage}` },
       { status: 500 }
     );
   }
