@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getStripe } from "@/lib/stripe";
 import { getDB, generateId } from "@/lib/db";
 import { getRequestContext } from "@cloudflare/next-on-pages";
@@ -13,41 +12,22 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const accountId = searchParams.get("account_id");
+    const formParam = searchParams.get("form");
 
     if (!accountId) {
       return NextResponse.redirect(new URL("/?error=missing_account", appUrl));
     }
 
-    const stripe = getStripe();
-
-    // Verify the Stripe account
-    const account = await stripe.accounts.retrieve(accountId);
-
-    // Check if charges are enabled
-    if (!account.charges_enabled) {
-      // Redirect back to complete onboarding
-      const accountLink = await stripe.accountLinks.create({
-        account: accountId,
-        refresh_url: `${appUrl}/api/onboard/refresh?account_id=${accountId}`,
-        return_url: `${appUrl}/api/callback?account_id=${accountId}`,
-        type: "account_onboarding",
-      });
-      return NextResponse.redirect(accountLink.url);
+    if (!formParam) {
+      return NextResponse.redirect(new URL("/?error=missing_form_data", appUrl));
     }
 
-    // Get form data from cookie
-    const cookieStore = await cookies();
-    const formCookie = cookieStore.get("vibepay_form");
-
-    if (!formCookie?.value) {
-      return NextResponse.redirect(new URL("/?error=session_expired", appUrl));
-    }
-
+    // Parse form data from URL parameter
     let formData;
     try {
-      formData = JSON.parse(formCookie.value);
+      formData = JSON.parse(decodeURIComponent(formParam));
     } catch {
-      return NextResponse.redirect(new URL("/?error=invalid_session", appUrl));
+      return NextResponse.redirect(new URL("/?error=invalid_form_data", appUrl));
     }
 
     const { name, priceInCents, destinationUrl, email } = formData;
@@ -55,6 +35,24 @@ export async function GET(request: NextRequest) {
     // Validate form data
     if (!name || !priceInCents || !destinationUrl) {
       return NextResponse.redirect(new URL("/?error=invalid_data", appUrl));
+    }
+
+    const stripe = getStripe();
+
+    // Verify the Stripe account
+    const account = await stripe.accounts.retrieve(accountId);
+
+    // Check if charges are enabled - if not, redirect to complete onboarding
+    if (!account.charges_enabled) {
+      // Re-encode form data for the redirect
+      const encodedFormData = encodeURIComponent(JSON.stringify(formData));
+      const accountLink = await stripe.accountLinks.create({
+        account: accountId,
+        refresh_url: `${appUrl}/api/onboard/refresh?account_id=${accountId}&form=${encodedFormData}`,
+        return_url: `${appUrl}/api/callback?account_id=${accountId}&form=${encodedFormData}`,
+        type: "account_onboarding",
+      });
+      return NextResponse.redirect(accountLink.url);
     }
 
     // Create product in D1 database
@@ -68,9 +66,6 @@ export async function GET(request: NextRequest) {
       )
       .bind(productId, accountId, name, priceInCents, destinationUrl, email)
       .run();
-
-    // Clear the form cookie
-    cookieStore.delete("vibepay_form");
 
     // Redirect to success page
     return NextResponse.redirect(new URL(`/created?id=${productId}`, appUrl));

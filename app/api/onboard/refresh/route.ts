@@ -12,18 +12,23 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const accountId = searchParams.get("account_id");
+    const formParam = searchParams.get("form");
 
     if (!accountId) {
       return NextResponse.redirect(new URL("/", appUrl));
     }
 
+    if (!formParam) {
+      return NextResponse.redirect(new URL("/?error=session_expired", appUrl));
+    }
+
     const stripe = getStripe();
 
-    // Create a new account link for the same account
+    // Create a new account link for the same account, preserving form data
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${appUrl}/api/onboard/refresh?account_id=${accountId}`,
-      return_url: `${appUrl}/api/callback?account_id=${accountId}`,
+      refresh_url: `${appUrl}/api/onboard/refresh?account_id=${accountId}&form=${formParam}`,
+      return_url: `${appUrl}/api/callback?account_id=${accountId}&form=${formParam}`,
       type: "account_onboarding",
     });
 
