@@ -1,20 +1,14 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 import PayButton from "./PayButton";
 
-// Server-side Supabase client
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("Missing Supabase credentials");
-  return createClient(url, key);
-}
+export const runtime = "edge";
 
 interface Product {
   id: string;
   name: string;
   price_in_cents: number;
-  is_active: boolean;
+  is_active: number;
 }
 
 export default async function PayPage({
@@ -24,21 +18,18 @@ export default async function PayPage({
   params: { id: string };
   searchParams: { canceled?: string };
 }) {
-  const supabase = getSupabase();
+  const db = getRequestContext().env.DB;
 
-  const { data: product, error } = await supabase
-    .from("products")
-    .select("id, name, price_in_cents, is_active")
-    .eq("id", params.id)
-    .single();
+  const product = await db
+    .prepare("SELECT id, name, price_in_cents, is_active FROM products WHERE id = ?")
+    .bind(params.id)
+    .first<Product>();
 
-  if (error || !product) {
+  if (!product) {
     notFound();
   }
 
-  const typedProduct = product as Product;
-
-  if (!typedProduct.is_active) {
+  if (!product.is_active) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="text-center">
@@ -53,7 +44,7 @@ export default async function PayPage({
     );
   }
 
-  const priceFormatted = (typedProduct.price_in_cents / 100).toFixed(2);
+  const priceFormatted = (product.price_in_cents / 100).toFixed(2);
   const canceled = searchParams.canceled === "true";
 
   return (
@@ -67,14 +58,14 @@ export default async function PayPage({
           )}
 
           <h1 className="font-display text-3xl font-bold mb-2">
-            {typedProduct.name}
+            {product.name}
           </h1>
 
           <div className="text-4xl font-bold text-accent my-8">
             ${priceFormatted}
           </div>
 
-          <PayButton productId={typedProduct.id} />
+          <PayButton productId={product.id} />
 
           <p className="text-xs text-white/40 mt-6">
             Secure payment powered by Stripe
@@ -82,10 +73,7 @@ export default async function PayPage({
         </div>
 
         <div className="text-center mt-6">
-          <a
-            href="/"
-            className="text-sm text-white/40 hover:text-white/60"
-          >
+          <a href="/" className="text-sm text-white/40 hover:text-white/60">
             Powered by VibePay
           </a>
         </div>

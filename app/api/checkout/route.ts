@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, calculatePlatformFee } from "@/lib/stripe";
-import { supabase, Product } from "@/lib/supabase";
+import { getStripe, calculatePlatformFee } from "@/lib/stripe";
+import { getDB, Product } from "@/lib/db";
+import { getRequestContext } from "@cloudflare/next-on-pages";
+
+export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,26 +17,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch product from database
-    const { data: product, error: dbError } = await supabase
-      .from("products")
-      .select("*")
-      .eq("id", productId)
-      .eq("is_active", true)
-      .single();
+    // Fetch product from D1 database
+    const db = getDB();
+    const product = await db
+      .prepare("SELECT * FROM products WHERE id = ? AND is_active = 1")
+      .bind(productId)
+      .first<Product>();
 
-    if (dbError || !product) {
+    if (!product) {
       return NextResponse.json(
         { error: "Product not found or inactive" },
         { status: 404 }
       );
     }
 
-    const typedProduct = product as Product;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const env = getRequestContext().env;
+    const appUrl = env.NEXT_PUBLIC_APP_URL || "https://vibepay.io";
+    const stripe = getStripe();
 
     // Calculate platform fee (5%)
-    const applicationFee = calculatePlatformFee(typedProduct.price_in_cents);
+    const applicationFee = calculatePlatformFee(product.price_in_cents);
 
     // Create Checkout Session
     const session = await stripe.checkout.sessions.create(
@@ -44,9 +47,9 @@ export async function POST(request: NextRequest) {
             price_data: {
               currency: "usd",
               product_data: {
-                name: typedProduct.name,
+                name: product.name,
               },
-              unit_amount: typedProduct.price_in_cents,
+              unit_amount: product.price_in_cents,
             },
             quantity: 1,
           },
@@ -54,11 +57,11 @@ export async function POST(request: NextRequest) {
         payment_intent_data: {
           application_fee_amount: applicationFee,
         },
-        success_url: typedProduct.destination_url,
+        success_url: product.destination_url,
         cancel_url: `${appUrl}/pay/${productId}?canceled=true`,
       },
       {
-        stripeAccount: typedProduct.stripe_account_id,
+        stripeAccount: product.stripe_account_id,
       }
     );
 

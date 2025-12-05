@@ -1,19 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { stripe } from "@/lib/stripe";
-import { supabase } from "@/lib/supabase";
+import { getStripe } from "@/lib/stripe";
+import { getDB, generateId } from "@/lib/db";
+import { getRequestContext } from "@cloudflare/next-on-pages";
+
+export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
+  const env = getRequestContext().env;
+  const appUrl = env.NEXT_PUBLIC_APP_URL || "https://vibepay.io";
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const accountId = searchParams.get("account_id");
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     if (!accountId) {
-      return NextResponse.redirect(
-        new URL("/?error=missing_account", appUrl)
-      );
+      return NextResponse.redirect(new URL("/?error=missing_account", appUrl));
     }
+
+    const stripe = getStripe();
 
     // Verify the Stripe account
     const account = await stripe.accounts.retrieve(accountId);
@@ -35,61 +40,42 @@ export async function GET(request: NextRequest) {
     const formCookie = cookieStore.get("vibepay_form");
 
     if (!formCookie?.value) {
-      return NextResponse.redirect(
-        new URL("/?error=session_expired", appUrl)
-      );
+      return NextResponse.redirect(new URL("/?error=session_expired", appUrl));
     }
 
     let formData;
     try {
       formData = JSON.parse(formCookie.value);
     } catch {
-      return NextResponse.redirect(
-        new URL("/?error=invalid_session", appUrl)
-      );
+      return NextResponse.redirect(new URL("/?error=invalid_session", appUrl));
     }
 
     const { name, priceInCents, destinationUrl, email } = formData;
 
     // Validate form data
     if (!name || !priceInCents || !destinationUrl) {
-      return NextResponse.redirect(
-        new URL("/?error=invalid_data", appUrl)
-      );
+      return NextResponse.redirect(new URL("/?error=invalid_data", appUrl));
     }
 
-    // Create product in database
-    const { data: product, error: dbError } = await supabase
-      .from("products")
-      .insert({
-        stripe_account_id: accountId,
-        name,
-        price_in_cents: priceInCents,
-        destination_url: destinationUrl,
-        creator_email: email,
-      })
-      .select()
-      .single();
+    // Create product in D1 database
+    const db = getDB();
+    const productId = generateId();
 
-    if (dbError) {
-      console.error("Database error:", dbError);
-      return NextResponse.redirect(
-        new URL("/?error=creation_failed", appUrl)
-      );
-    }
+    await db
+      .prepare(
+        `INSERT INTO products (id, stripe_account_id, name, price_in_cents, destination_url, creator_email)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .bind(productId, accountId, name, priceInCents, destinationUrl, email)
+      .run();
 
     // Clear the form cookie
     cookieStore.delete("vibepay_form");
 
     // Redirect to success page
-    return NextResponse.redirect(
-      new URL(`/created?id=${product.id}`, appUrl)
-    );
+    return NextResponse.redirect(new URL(`/created?id=${productId}`, appUrl));
   } catch (error) {
     console.error("Callback error:", error);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    return NextResponse.redirect(
-      new URL("/?error=callback_failed", appUrl)
-    );
+    return NextResponse.redirect(new URL("/?error=callback_failed", appUrl));
   }
 }

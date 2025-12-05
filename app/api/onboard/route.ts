@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
+import { getRequestContext } from "@cloudflare/next-on-pages";
+
+export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,11 +48,15 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies();
     cookieStore.set("vibepay_form", JSON.stringify(formData), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "lax",
       maxAge: 60 * 60, // 1 hour
       path: "/",
     });
+
+    const stripe = getStripe();
+    const env = getRequestContext().env;
+    const appUrl = env.NEXT_PUBLIC_APP_URL || "https://vibepay.io";
 
     // Create Stripe Connect account
     const account = await stripe.accounts.create({
@@ -58,7 +65,6 @@ export async function POST(request: NextRequest) {
     });
 
     // Create account link for onboarding
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
       refresh_url: `${appUrl}/api/onboard/refresh?account_id=${account.id}`,

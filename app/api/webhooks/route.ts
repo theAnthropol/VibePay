@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 import Stripe from "stripe";
 
-// Disable body parsing - we need the raw body
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +17,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const env = getRequestContext().env;
+    const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
+
     if (!webhookSecret) {
       console.error("STRIPE_WEBHOOK_SECRET is not set");
       return NextResponse.json(
@@ -26,16 +28,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const stripe = getStripe();
+
     // Verify webhook signature
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      event = await stripe.webhooks.constructEventAsync(
+        body,
+        signature,
+        webhookSecret
+      );
     } catch (err) {
       console.error("Webhook signature verification failed:", err);
-      return NextResponse.json(
-        { error: "Invalid signature" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
     // Handle events

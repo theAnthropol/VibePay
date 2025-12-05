@@ -7,24 +7,29 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:setup": "tsx scripts/setup-db.ts"
+    "pages:build": "npx @cloudflare/next-on-pages",
+    "pages:dev": "npx wrangler pages dev .vercel/output/static --compatibility-date=2024-04-01 --compatibility-flag=nodejs_compat",
+    "pages:deploy": "npm run pages:build && npx wrangler pages deploy .vercel/output/static",
+    "db:create": "npx wrangler d1 create vibepay-db",
+    "db:migrate": "npx wrangler d1 execute vibepay-db --file=./schema.sql",
+    "db:migrate:local": "npx wrangler d1 execute vibepay-db --file=./schema.sql --local"
   },
   "dependencies": {
     "next": "14.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "stripe": "^15.5.0",
-    "@supabase/supabase-js": "^2.43.4",
-    "dotenv": "^16.4.5"
+    "stripe": "^15.5.0"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.11.0",
+    "@cloudflare/workers-types": "^4.20240512.0",
     "@types/node": "^20.12.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
-    "tsx": "^4.10.5",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "wrangler": "^3.57.0"
   }
 }

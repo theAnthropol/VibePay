@@ -1,34 +1,20 @@
--- VibePay Database Schema
--- Run this in your Supabase SQL Editor
+-- VibePay Database Schema for Cloudflare D1 (SQLite)
+-- Run with: npm run db:migrate
 
 -- Products table: The only table we need
-create table products (
-  id uuid primary key default gen_random_uuid(),
-  stripe_account_id text not null,
-  name text not null,
-  price_in_cents int not null check (price_in_cents >= 200),
-  destination_url text not null,
-  creator_email text,
-  is_active boolean default true,
-  created_at timestamp with time zone default now()
+CREATE TABLE IF NOT EXISTS products (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  stripe_account_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  price_in_cents INTEGER NOT NULL CHECK (price_in_cents >= 200),
+  destination_url TEXT NOT NULL,
+  creator_email TEXT,
+  is_active INTEGER DEFAULT 1,
+  created_at TEXT DEFAULT (datetime('now'))
 );
 
 -- Index for fast lookups by stripe account
-create index idx_products_stripe_account on products(stripe_account_id);
+CREATE INDEX IF NOT EXISTS idx_products_stripe_account ON products(stripe_account_id);
 
 -- Index for active products
-create index idx_products_active on products(id) where is_active = true;
-
--- Row Level Security (optional but recommended)
-alter table products enable row level security;
-
--- Allow anonymous reads for active products (for payment pages)
-create policy "Anyone can view active products"
-  on products for select
-  using (is_active = true);
-
--- Service role can do everything (for API routes)
-create policy "Service role has full access"
-  on products for all
-  using (true)
-  with check (true);
+CREATE INDEX IF NOT EXISTS idx_products_active ON products(id) WHERE is_active = 1;

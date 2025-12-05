@@ -1,15 +1,9 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 import CopyButton from "./CopyButton";
 import Link from "next/link";
 
-// Server-side Supabase client
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("Missing Supabase credentials");
-  return createClient(url, key);
-}
+export const runtime = "edge";
 
 interface Product {
   id: string;
@@ -28,24 +22,22 @@ export default async function CreatedPage({
     redirect("/");
   }
 
-  const supabase = getSupabase();
+  const ctx = getRequestContext();
+  const db = ctx.env.DB;
+  const appUrl = ctx.env.NEXT_PUBLIC_APP_URL || "https://vibepay.io";
 
-  const { data: product, error } = await supabase
-    .from("products")
-    .select("id, name, price_in_cents")
-    .eq("id", productId)
-    .single();
+  const product = await db
+    .prepare("SELECT id, name, price_in_cents FROM products WHERE id = ?")
+    .bind(productId)
+    .first<Product>();
 
-  if (error || !product) {
+  if (!product) {
     redirect("/?error=product_not_found");
   }
 
-  const typedProduct = product as Product;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://vibepay.io";
-  const paymentLink = `${appUrl}/pay/${typedProduct.id}`;
-  const priceFormatted = (typedProduct.price_in_cents / 100).toFixed(2);
-
-  const embedCode = `<script src="${appUrl}/embed.js" data-vibepay-id="${typedProduct.id}"></script>`;
+  const paymentLink = `${appUrl}/pay/${product.id}`;
+  const priceFormatted = (product.price_in_cents / 100).toFixed(2);
+  const embedCode = `<script src="${appUrl}/embed.js" data-vibepay-id="${product.id}"></script>`;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -66,7 +58,7 @@ export default async function CreatedPage({
               Your VibePay link is ready!
             </h1>
             <p className="text-white/60">
-              <span className="text-accent">{typedProduct.name}</span> — $
+              <span className="text-accent">{product.name}</span> — $
               {priceFormatted}
             </p>
           </div>
@@ -129,10 +121,7 @@ export default async function CreatedPage({
 
           {/* Create Another */}
           <div className="mt-12 text-center">
-            <Link
-              href="/"
-              className="text-sm text-white/60 hover:text-white"
-            >
+            <Link href="/" className="text-sm text-white/60 hover:text-white">
               ← Create another product
             </Link>
           </div>
