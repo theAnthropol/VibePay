@@ -3,7 +3,7 @@ interface CloudflareEnv {
   DB: D1Database;
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
-  NEXT_PUBLIC_APP_URL: string;
+  NEXT_PUBLIC_APP_URL?: string;
 }
 
 declare global {

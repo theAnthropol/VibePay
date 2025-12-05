@@ -7,7 +7,7 @@ pages_build_output_dir = ".vercel/output/static"
 [[d1_databases]]
 binding = "DB"
 database_name = "vibepay-db"
-database_id = "YOUR_DATABASE_ID_HERE"  # Run `npm run db:create` to get this
+database_id = "cfcfc281-2894-4ed0-a754-f727de13e74c"
 
 [vars]
 NEXT_PUBLIC_APP_URL = "https://vibepay.io"

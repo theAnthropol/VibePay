@@ -3,7 +3,8 @@ import { getRequestContext } from "@cloudflare/next-on-pages";
 
 // Get Stripe client (initialized per-request for edge runtime)
 export function getStripe(): Stripe {
-  const secretKey = getRequestContext().env.STRIPE_SECRET_KEY;
+  const env = getRequestContext().env as Record<string, unknown>;
+  const secretKey = env.STRIPE_SECRET_KEY as string;
   if (!secretKey) {
     throw new Error("STRIPE_SECRET_KEY is not set");
   }

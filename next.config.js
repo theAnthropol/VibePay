@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Required for Cloudflare Pages
-  experimental: {
-    serverActions: true,
-  },
+  // Server Actions are enabled by default in Next.js 14+
 };
 
 module.exports = nextConfig;

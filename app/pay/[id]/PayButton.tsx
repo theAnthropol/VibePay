@@ -17,14 +17,16 @@ export default function PayButton({ productId }: { productId: string }) {
         body: JSON.stringify({ productId }),
       });
 
-      const data = await res.json();
+      const data = await res.json() as { url?: string; error?: string };
 
       if (!res.ok) {
         throw new Error(data.error || "Something went wrong");
       }
 
       // Redirect to Stripe Checkout
-      window.location.href = data.url;
+      if (data.url) {
+        window.location.href = data.url;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setIsLoading(false);

@@ -7,8 +7,8 @@ import { getRequestContext } from "@cloudflare/next-on-pages";
 export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
-  const env = getRequestContext().env;
-  const appUrl = env.NEXT_PUBLIC_APP_URL || "https://vibepay.io";
+  const env = getRequestContext().env as Record<string, unknown>;
+  const appUrl = (env.NEXT_PUBLIC_APP_URL as string) || "https://vibepay.io";
 
   try {
     const searchParams = request.nextUrl.searchParams;

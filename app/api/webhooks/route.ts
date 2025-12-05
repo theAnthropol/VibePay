@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const env = getRequestContext().env;
-    const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
+    const env = getRequestContext().env as Record<string, unknown>;
+    const webhookSecret = env.STRIPE_WEBHOOK_SECRET as string;
 
     if (!webhookSecret) {
       console.error("STRIPE_WEBHOOK_SECRET is not set");

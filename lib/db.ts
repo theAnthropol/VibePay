@@ -14,7 +14,8 @@ export interface Product {
 
 // Get D1 database from request context
 export function getDB(): D1Database {
-  return getRequestContext().env.DB;
+  const env = getRequestContext().env as Record<string, unknown>;
+  return env.DB as D1Database;
 }
 
 // Helper to generate UUID-like ID

@@ -7,7 +7,7 @@ export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json() as { productId?: string };
     const { productId } = body;
 
     if (!productId) {
@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const env = getRequestContext().env;
-    const appUrl = env.NEXT_PUBLIC_APP_URL || "https://vibepay.io";
+    const env = getRequestContext().env as Record<string, unknown>;
+    const appUrl = (env.NEXT_PUBLIC_APP_URL as string) || "https://vibepay.io";
     const stripe = getStripe();
 
     // Calculate platform fee (5%)

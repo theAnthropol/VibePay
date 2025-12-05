@@ -7,7 +7,7 @@ export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json() as { name?: string; priceInCents?: number; destinationUrl?: string; email?: string };
     const { name, priceInCents, destinationUrl, email } = body;
 
     // Validate inputs
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
     });
 
     const stripe = getStripe();
-    const env = getRequestContext().env;
-    const appUrl = env.NEXT_PUBLIC_APP_URL || "https://vibepay.io";
+    const env = getRequestContext().env as Record<string, unknown>;
+    const appUrl = (env.NEXT_PUBLIC_APP_URL as string) || "https://vibepay.io";
 
     // Create Stripe Connect account
     const account = await stripe.accounts.create({

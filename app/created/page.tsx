@@ -14,17 +14,19 @@ interface Product {
 export default async function CreatedPage({
   searchParams,
 }: {
-  searchParams: { id?: string };
+  searchParams: Promise<{ id?: string }>;
 }) {
-  const productId = searchParams.id;
+  const params = await searchParams;
+  const productId = params.id;
 
   if (!productId) {
     redirect("/");
   }
 
   const ctx = getRequestContext();
-  const db = ctx.env.DB;
-  const appUrl = ctx.env.NEXT_PUBLIC_APP_URL || "https://vibepay.io";
+  const env = ctx.env as Record<string, unknown>;
+  const db = env.DB as D1Database;
+  const appUrl = (env.NEXT_PUBLIC_APP_URL as string) || "https://vibepay.io";
 
   const product = await db
     .prepare("SELECT id, name, price_in_cents FROM products WHERE id = ?")
