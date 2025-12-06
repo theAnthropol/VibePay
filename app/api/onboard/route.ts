@@ -71,10 +71,13 @@ export async function POST(request: NextRequest) {
     const appUrl = (env.NEXT_PUBLIC_APP_URL as string) || "https://vibepay.io";
 
     // Check if this email already has a verified Stripe account
-    if (email?.trim()) {
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (normalizedEmail) {
+      // First check our local database
       const existingSeller = await db
         .prepare("SELECT * FROM sellers WHERE email = ?")
-        .bind(email.trim().toLowerCase())
+        .bind(normalizedEmail)
         .first<Seller>();
 
       if (existingSeller) {
@@ -95,9 +98,47 @@ export async function POST(request: NextRequest) {
           await db.prepare("DELETE FROM sellers WHERE id = ?").bind(existingSeller.id).run();
         }
       }
+
+      // Not in our DB - search Stripe for existing connected account with this email
+      // This catches accounts created before we added the sellers table
+      try {
+        const accounts = await stripe.accounts.list({ limit: 100 });
+        const existingAccount = accounts.data.find(
+          (acc) => acc.email?.toLowerCase() === normalizedEmail && acc.details_submitted
+        );
+
+        if (existingAccount) {
+          // Found existing account in Stripe! Save it and use it
+          console.log("Found existing Stripe account for email:", normalizedEmail);
+
+          // Save to our DB for future
+          try {
+            await db
+              .prepare(
+                `INSERT INTO sellers (email, stripe_account_id, is_verified)
+                 VALUES (?, ?, 1)
+                 ON CONFLICT(email) DO UPDATE SET stripe_account_id = ?, is_verified = 1`
+              )
+              .bind(normalizedEmail, existingAccount.id, existingAccount.id)
+              .run();
+          } catch (e) {
+            console.log("Note: couldn't save seller:", e);
+          }
+
+          // Skip onboarding - use existing account
+          const encodedFormData = encodeURIComponent(JSON.stringify(formData));
+          return NextResponse.json({
+            url: `${appUrl}/api/callback?account_id=${existingAccount.id}&form=${encodedFormData}`,
+            returning: true
+          });
+        }
+      } catch (err) {
+        console.log("Note: couldn't search Stripe accounts:", err);
+        // Continue to create new account
+      }
     }
 
-    // No existing account - create a new Stripe Connect account
+    // No existing account found anywhere - create a new Stripe Connect account
     const account = await stripe.accounts.create({
       type: "standard",
       email: email?.trim() || undefined,
