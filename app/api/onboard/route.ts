@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     // URL validation helper - prevents javascript: and data: URLs
-    const isValidUrl = (url: string): boolean => {
+    const isValidUrl = (url: string | undefined): boolean => {
       if (!url || typeof url !== "string") return false;
       const trimmed = url.trim().toLowerCase();
       // Only allow http and https protocols
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       return true;
     };
 
-    if (!isValidUrl(destinationUrl)) {
+    if (!destinationUrl || !isValidUrl(destinationUrl)) {
       return NextResponse.json(
         { error: "Valid destination URL is required (http:// or https://)" },
         { status: 400 }
