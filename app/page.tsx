@@ -357,9 +357,7 @@ export default function Home() {
             </button>
 
             <p className="text-xs text-white/40 text-center lg:text-left">
-              You&apos;ll be redirected to Stripe to connect your account.
-              <br />
-              Returning users: Stripe remembers you — instant creation.
+              First time users are redirected to Stripe to connect your account.
             </p>
           </form>
           </div>
