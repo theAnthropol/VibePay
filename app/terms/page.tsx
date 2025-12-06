@@ -67,7 +67,7 @@ export default function TermsPage() {
             <p>
               VibePay charges 5% of each successful transaction as an
               application fee. Stripe&apos;s standard processing fees (~2.9% +
-              $0.30) also apply. The minimum product price is $2.00.
+              $0.30) also apply. The minimum product price is $0.99.
             </p>
           </section>
 

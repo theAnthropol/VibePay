@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS products (
   id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   stripe_account_id TEXT NOT NULL,
   name TEXT NOT NULL,
-  price_in_cents INTEGER NOT NULL CHECK (price_in_cents >= 200),
+  price_in_cents INTEGER NOT NULL CHECK (price_in_cents >= 99),
   destination_url TEXT NOT NULL,
   -- Protected URL (encrypted) - if set, destination_url becomes success page, this is the actual content
   protected_url TEXT,

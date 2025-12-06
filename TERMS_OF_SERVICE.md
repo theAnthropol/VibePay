@@ -90,7 +90,7 @@ VibePay charges Sellers a **5% platform fee** on each successful transaction. Th
 Stripe charges additional processing fees (approximately 2.9% + $0.30 per transaction for US cards). These fees are deducted from the Seller's payout.
 
 ### 7.3 Minimum Price
-The minimum product price is **$2.00 USD** to ensure viable transactions after fees.
+The minimum product price is **$0.99 USD**.
 
 ### 7.4 Payouts
 Payouts are handled entirely by Stripe according to their payout schedule and your connected account settings.

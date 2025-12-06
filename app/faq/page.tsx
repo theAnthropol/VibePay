@@ -14,7 +14,7 @@ const faqs = [
   {
     question: "What are the fees?",
     answer:
-      "VibePay takes 5% of each transaction. Stripe's standard fees (~2.9% + $0.30) also apply. The minimum price is $2.00 to ensure sustainable margins.",
+      "VibePay takes 5% of each transaction. Stripe's standard fees (~2.9% + $0.30) also apply. The minimum price is $0.99.",
   },
   {
     question: "How do I get paid?",

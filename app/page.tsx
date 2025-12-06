@@ -25,7 +25,7 @@ export default function Home() {
 
   const isValid =
     name.trim() &&
-    priceNum >= 2 &&
+    priceNum >= 0.99 &&
     isValidUrl(destinationUrl) &&
     (!useProtection || isValidUrl(protectedUrl));
 
@@ -174,7 +174,7 @@ export default function Home() {
 
             <div>
               <label className="block text-sm text-white/60 mb-2">
-                Price (USD) — $2 minimum
+                Price (USD) — $0.99 minimum
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
@@ -185,7 +185,7 @@ export default function Home() {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="10.00"
-                  min="2"
+                  min="0.99"
                   step="0.01"
                   className="input-field pl-8"
                   required
@@ -265,7 +265,7 @@ export default function Home() {
             </div>
 
             {/* Fee Calculator */}
-            {priceNum >= 2 && (
+            {priceNum >= 0.99 && (
               <div className="card space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-white/60">Buyer pays</span>

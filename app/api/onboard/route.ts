@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!priceInCents || typeof priceInCents !== "number" || priceInCents < 200) {
+    if (!priceInCents || typeof priceInCents !== "number" || priceInCents < 99) {
       return NextResponse.json(
-        { error: "Price must be at least $2.00" },
+        { error: "Price must be at least $0.99" },
         { status: 400 }
       );
     }
