@@ -16,10 +16,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json() as { name?: string; priceInCents?: number; destinationUrl?: string; protectedUrl?: string; email?: string };
     const { name, priceInCents, destinationUrl, protectedUrl, email } = body;
 
-    // Validate inputs
+    // Validate inputs with security limits
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json(
         { error: "Product name is required" },
+        { status: 400 }
+      );
+    }
+
+    // Length limits to prevent abuse
+    if (name.trim().length > 100) {
+      return NextResponse.json(
+        { error: "Product name must be 100 characters or less" },
         { status: 400 }
       );
     }
@@ -31,12 +39,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (
-      !destinationUrl ||
-      typeof destinationUrl !== "string" ||
-      (!destinationUrl.startsWith("http://") &&
-        !destinationUrl.startsWith("https://"))
-    ) {
+    // Maximum price limit ($10,000)
+    if (priceInCents > 1000000) {
+      return NextResponse.json(
+        { error: "Price must be $10,000 or less" },
+        { status: 400 }
+      );
+    }
+
+    // URL validation helper - prevents javascript: and data: URLs
+    const isValidUrl = (url: string): boolean => {
+      if (!url || typeof url !== "string") return false;
+      const trimmed = url.trim().toLowerCase();
+      // Only allow http and https protocols
+      if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) return false;
+      // Block javascript: and data: injection attempts
+      if (trimmed.includes("javascript:") || trimmed.includes("data:")) return false;
+      // URL length limit (2048 is standard browser limit)
+      if (url.length > 2048) return false;
+      return true;
+    };
+
+    if (!isValidUrl(destinationUrl)) {
       return NextResponse.json(
         { error: "Valid destination URL is required (http:// or https://)" },
         { status: 400 }
@@ -44,16 +68,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate protected URL if provided
-    if (
-      protectedUrl &&
-      typeof protectedUrl === "string" &&
-      !protectedUrl.startsWith("http://") &&
-      !protectedUrl.startsWith("https://")
-    ) {
+    if (protectedUrl && !isValidUrl(protectedUrl)) {
       return NextResponse.json(
         { error: "Protected URL must be a valid URL (http:// or https://)" },
         { status: 400 }
       );
+    }
+
+    // Email validation (if provided)
+    if (email && typeof email === "string") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim()) || email.length > 254) {
+        return NextResponse.json(
+          { error: "Invalid email address" },
+          { status: 400 }
+        );
+      }
     }
 
     // Store form data for later use via query params

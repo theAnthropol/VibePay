@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function PayButton({ productId }: { productId: string }) {
+export default function PayButton({ productId, returnUrl }: { productId: string; returnUrl?: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -14,7 +14,7 @@ export default function PayButton({ productId }: { productId: string }) {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId }),
+        body: JSON.stringify({ productId, returnUrl: returnUrl || undefined }),
       });
 
       const data = await res.json() as { url?: string; error?: string };

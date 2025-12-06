@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function Home() {
@@ -12,6 +12,21 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+  // Check if user has already accepted cookies
+  useEffect(() => {
+    const cookiesAccepted = localStorage.getItem("vibepay_cookies_accepted");
+    if (!cookiesAccepted) {
+      setShowCookieBanner(true);
+    }
+  }, []);
+
+  const acceptCookies = () => {
+    localStorage.setItem("vibepay_cookies_accepted", "true");
+    setShowCookieBanner(false);
+  };
 
   // Fee calculator
   const priceNum = parseFloat(price) || 0;
@@ -25,9 +40,12 @@ export default function Home() {
 
   const isValid =
     name.trim() &&
+    name.trim().length <= 100 &&
     priceNum >= 0.99 &&
+    priceNum <= 10000 &&
     isValidUrl(destinationUrl) &&
-    (!useProtection || isValidUrl(protectedUrl));
+    (!useProtection || isValidUrl(protectedUrl)) &&
+    acceptedTerms;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -104,24 +122,27 @@ export default function Home() {
 
                 <div>
                   <div className="text-white/80 font-medium mb-2">3 ways to monetize:</div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex gap-2">
                       <span className="text-accent font-bold">1.</span>
-                      <p className="text-white/50">
-                        <span className="text-white/70">Share the link</span> — get a unique payment URL to share anywhere
-                      </p>
+                      <div className="text-white/50">
+                        <span className="text-white/70">Share the link</span>
+                        <span className="text-white/30 text-xs ml-1">(Twitter, Discord, email)</span>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <span className="text-accent font-bold">2.</span>
-                      <p className="text-white/50">
-                        <span className="text-white/70">Embed a button</span> — drop a code snippet into any site or app
-                      </p>
+                      <div className="text-white/50">
+                        <span className="text-white/70">Embed a button</span>
+                        <span className="text-white/30 text-xs ml-1">(websites, blogs, docs)</span>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <span className="text-accent font-bold">3.</span>
-                      <p className="text-white/50">
-                        <span className="text-white/70">Protect a download</span> — paywall any file link (Google Drive, Dropbox, etc.)
-                      </p>
+                      <div className="text-white/50">
+                        <span className="text-white/70">Paywall your app</span>
+                        <span className="text-white/30 text-xs ml-1">(SaaS, tools, games)</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -153,7 +174,7 @@ export default function Home() {
             {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 text-sm">
+              <div className="alert-error px-4 py-3 text-sm" role="alert">
                 {error}
               </div>
             )}
@@ -168,13 +189,16 @@ export default function Home() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="My Awesome Thing"
                 className="input-field"
+                maxLength={100}
                 required
+                aria-describedby="name-hint"
               />
+              <p id="name-hint" className="text-xs text-white/30 mt-1">{name.length}/100</p>
             </div>
 
             <div>
               <label className="block text-sm text-white/60 mb-2">
-                Price (USD) — $0.99 minimum
+                Price (USD) — $0.99 to $10,000
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
@@ -186,6 +210,7 @@ export default function Home() {
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="10.00"
                   min="0.99"
+                  max="10000"
                   step="0.01"
                   className="input-field pl-8"
                   required
@@ -224,9 +249,9 @@ export default function Home() {
                 />
                 <div>
                   <span className="font-medium">Protect a file link</span>
+                  <span className="ml-2 text-xs bg-accent/20 text-accent px-2 py-0.5 rounded">For downloads</span>
                   <p className="text-sm text-white/50 mt-1">
-                    Hide your Google Drive, Dropbox, or any file URL behind a
-                    paywall. Buyers get a secure, time-limited access link.
+                    Sell downloadable files (PDFs, ZIPs, videos, etc.). Your file URL stays hidden — buyers get a secure, time-limited download link after payment. Works with Google Drive, Dropbox, or any direct file URL.
                   </p>
                 </div>
               </label>
@@ -288,6 +313,34 @@ export default function Home() {
               </div>
             )}
 
+            {/* Terms & Privacy Acceptance */}
+            <div className="card">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="mt-1 w-4 h-4 accent-accent"
+                  required
+                />
+                <div className="text-sm">
+                  <span className="text-white/80">
+                    I agree to the{" "}
+                    <Link href="/terms" className="text-accent hover:underline" target="_blank">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className="text-accent hover:underline" target="_blank">
+                      Privacy Policy
+                    </Link>
+                  </span>
+                  <p className="text-white/40 text-xs mt-1">
+                    You must accept to create a payment link
+                  </p>
+                </div>
+              </label>
+            </div>
+
             <button
               type="submit"
               disabled={!isValid || isLoading}
@@ -310,6 +363,36 @@ export default function Home() {
       <footer className="p-6 text-center text-sm text-white/40">
         Built for vibe coders who ship.
       </footer>
+
+      {/* Cookie Consent Banner */}
+      {showCookieBanner && (
+        <div className="fixed bottom-0 left-0 right-0 bg-black/95 border-t border-white/10 p-4 z-50">
+          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-white/70 text-center sm:text-left">
+              <span className="text-white font-medium">We use cookies</span> to remember your preferences and improve your experience.
+              By continuing, you agree to our{" "}
+              <Link href="/privacy" className="text-accent hover:underline">
+                Privacy Policy
+              </Link>
+              .
+            </div>
+            <div className="flex gap-3 flex-shrink-0">
+              <button
+                onClick={acceptCookies}
+                className="btn-primary text-sm px-6 py-2"
+              >
+                Accept
+              </button>
+              <button
+                onClick={() => setShowCookieBanner(false)}
+                className="text-sm text-white/50 hover:text-white px-4 py-2"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,8 +7,8 @@ export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as { productId?: string };
-    const { productId } = body;
+    const body = await request.json() as { productId?: string; returnUrl?: string };
+    const { productId, returnUrl } = body;
 
     if (!productId) {
       return NextResponse.json(
@@ -38,10 +38,20 @@ export async function POST(request: NextRequest) {
     // Calculate platform fee (5%)
     const applicationFee = calculatePlatformFee(product.price_in_cents);
 
-    // Determine success URL - use our handler for protected products
-    const successUrl = product.protected_url
-      ? `${appUrl}/api/success?product_id=${productId}&session_id={CHECKOUT_SESSION_ID}`
-      : product.destination_url;
+    // Determine success URL
+    let successUrl: string;
+
+    if (returnUrl) {
+      // Gate.js flow: redirect back to app with payment confirmation
+      const separator = returnUrl.includes('?') ? '&' : '?';
+      successUrl = `${returnUrl}${separator}vibepay_payment={CHECKOUT_SESSION_ID}`;
+    } else if (product.protected_url) {
+      // Protected URL flow: use our handler
+      successUrl = `${appUrl}/api/success?product_id=${productId}&session_id={CHECKOUT_SESSION_ID}`;
+    } else {
+      // Simple redirect to destination
+      successUrl = product.destination_url;
+    }
 
     // Create Checkout Session
     const session = await stripe.checkout.sessions.create(

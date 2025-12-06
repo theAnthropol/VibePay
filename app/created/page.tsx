@@ -39,6 +39,7 @@ export default async function CreatedPage({
   const paymentLink = `${appUrl}/pay/${product.id}`;
   const priceFormatted = (product.price_in_cents / 100).toFixed(2);
   const embedCode = `<script src="${appUrl}/embed.js" data-vibepay-id="${product.id}"></script>`;
+  const gateCode = `<script src="${appUrl}/gate.js" data-vibepay-id="${product.id}"></script>`;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -64,9 +65,26 @@ export default async function CreatedPage({
             </p>
           </div>
 
-          {/* 3 Ways to Get Paid */}
-          <div className="text-sm text-white/50 mb-4 text-center">
-            3 ways to get paid:
+          {/* Quick Reference - 3 Ways to Get Paid */}
+          <div className="bg-white/5 rounded-lg p-4 mb-8">
+            <div className="text-xs text-white/40 mb-3 text-center">Pick the method that fits your use case:</div>
+            <div className="grid grid-cols-3 gap-3 text-center text-xs">
+              <div className="space-y-1">
+                <div className="text-accent font-bold">1. Link</div>
+                <div className="text-white/50">Share anywhere</div>
+                <div className="text-white/30">Social, email, DMs</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-accent font-bold">2. Button</div>
+                <div className="text-white/50">Add to website</div>
+                <div className="text-white/30">HTML, blogs, docs</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-accent font-bold">3. Paywall</div>
+                <div className="text-white/50">Block entire app</div>
+                <div className="text-white/30">SaaS, tools, games</div>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-6">
@@ -190,25 +208,80 @@ with the text "Buy ${product.name} - $${priceFormatted}"`}
               </details>
             </div>
 
-            {/* Option 3: QR Code (coming soon) or Stripe Dashboard */}
+            {/* Option 3: Gate.js Paywall */}
             <div className="card">
               <div className="flex items-center gap-2 mb-3">
                 <span className="bg-accent/20 text-accent text-xs font-bold px-2 py-1 rounded">3</span>
-                <label className="text-sm font-medium">Track Sales & Payouts</label>
+                <label className="text-sm font-medium">Paywall Your App</label>
+                <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">For apps</span>
               </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={gateCode}
+                  readOnly
+                  className="input-field flex-1 text-sm font-mono"
+                />
+                <CopyButton text={gateCode} />
+              </div>
+              <p className="text-xs text-white/40 mt-2">
+                Blocks your entire app until payment. Perfect for SaaS, tools, games, or any web app you want to monetize.
+              </p>
+
+              <details className="mt-4">
+                <summary className="text-xs text-white/50 cursor-pointer hover:text-white/70">
+                  How it works
+                </summary>
+                <div className="mt-3 space-y-3 text-xs">
+                  <div className="bg-white/5 p-3 rounded">
+                    <div className="font-medium text-white/80 mb-2">🔒 Full-screen paywall</div>
+                    <p className="text-white/50">
+                      Gate.js shows a payment overlay that blocks your entire app. Users can&apos;t interact with anything until they pay. After payment, access is saved to their browser — they won&apos;t see the paywall again.
+                    </p>
+                  </div>
+                  <div className="bg-white/5 p-3 rounded">
+                    <div className="font-medium text-white/80 mb-2">⚡ One-time setup</div>
+                    <ol className="list-decimal list-inside space-y-1 text-white/50">
+                      <li>Add the script tag to your app&apos;s HTML</li>
+                      <li>Deploy your app</li>
+                      <li>Users pay → get lifetime access</li>
+                    </ol>
+                  </div>
+                  <div className="bg-white/5 p-3 rounded">
+                    <div className="font-medium text-white/80 mb-2">🎨 Customization options</div>
+                    <div className="space-y-2 text-white/50">
+                      <code className="block bg-black/30 p-2 rounded font-mono break-all">
+                        data-theme=&quot;light&quot; or &quot;dark&quot;
+                      </code>
+                      <code className="block bg-black/30 p-2 rounded font-mono break-all">
+                        data-title=&quot;Unlock Premium&quot;
+                      </code>
+                      <code className="block bg-black/30 p-2 rounded font-mono break-all">
+                        data-description=&quot;Get full access&quot;
+                      </code>
+                      <code className="block bg-black/30 p-2 rounded font-mono break-all">
+                        data-button-text=&quot;Buy Now&quot;
+                      </code>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+          </div>
+
+          {/* Stripe Dashboard */}
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <div className="text-center">
               <a
                 href="https://dashboard.stripe.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-primary inline-block text-center w-full"
+                className="text-sm text-white/60 hover:text-white inline-flex items-center gap-2"
               >
-                Open Stripe Dashboard →
+                <span>📊</span> Track Sales & Payouts in Stripe Dashboard →
               </a>
-              <p className="text-xs text-white/40 mt-2">
-                View sales, issue refunds, and manage payouts.
-              </p>
             </div>
-
           </div>
 
           {/* Create Another */}
