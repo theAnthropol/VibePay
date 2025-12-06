@@ -164,10 +164,10 @@ export default function Home() {
               <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
                 Payment links for
                 <br />
-                <span className="text-accent">vibe coders</span>
+                <span className="text-accent">vibe creators</span>
               </h1>
               <p className="text-white/60 text-lg">
-                No accounts. No dashboards. Just vibes.
+                Create, link, get paid.
               </p>
             </div>
 
