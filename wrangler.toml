@@ -1,18 +1,15 @@
+# VibePay Cloudflare Pages Configuration
 name = "vibepay"
+pages_build_output_dir = ".vercel/output/static"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = ".vercel/output/static"
+
+[vars]
+NODE_VERSION = "20"
+NEXT_PUBLIC_APP_URL = "https://vibepay.io"
 
 # D1 Database binding
 [[d1_databases]]
 binding = "DB"
 database_name = "vibepay"
 database_id = "cfcfc281-2894-4ed0-a754-f727de13e74c"
-
-[vars]
-NEXT_PUBLIC_APP_URL = "https://vibepay.io"
-
-# Add your secrets via: npx wrangler secret put SECRET_NAME
-# Required secrets:
-# - STRIPE_SECRET_KEY
-# - STRIPE_WEBHOOK_SECRET
