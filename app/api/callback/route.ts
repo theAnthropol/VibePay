@@ -70,6 +70,23 @@ export async function GET(request: NextRequest) {
       .bind(productId, accountId, name, priceInCents, destinationUrl, protectedUrl || null, email)
       .run();
 
+    // Save seller for future instant access (if email provided)
+    if (email) {
+      try {
+        await db
+          .prepare(
+            `INSERT INTO sellers (email, stripe_account_id, is_verified)
+             VALUES (?, ?, 1)
+             ON CONFLICT(email) DO UPDATE SET stripe_account_id = ?, is_verified = 1`
+          )
+          .bind(email.toLowerCase(), accountId, accountId)
+          .run();
+      } catch (err) {
+        // Non-fatal - seller might already exist
+        console.log("Seller save note:", err);
+      }
+    }
+
     // Redirect to success page (with review flag if needed)
     const successUrl = needsReview
       ? `/created?id=${productId}&review=pending`

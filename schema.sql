@@ -37,3 +37,15 @@ CREATE INDEX IF NOT EXISTS idx_access_tokens_token ON access_tokens(token);
 
 -- Index for cleanup of expired tokens
 CREATE INDEX IF NOT EXISTS idx_access_tokens_expires ON access_tokens(expires_at);
+
+-- Sellers table: Maps email to Stripe Connect account (so returning users skip onboarding)
+CREATE TABLE IF NOT EXISTS sellers (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  email TEXT NOT NULL UNIQUE,
+  stripe_account_id TEXT NOT NULL,
+  is_verified INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Index for email lookups
+CREATE INDEX IF NOT EXISTS idx_sellers_email ON sellers(email);

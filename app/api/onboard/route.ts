@@ -4,6 +4,13 @@ import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
+interface Seller {
+  id: string;
+  email: string;
+  stripe_account_id: string;
+  is_verified: number;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as { name?: string; priceInCents?: number; destinationUrl?: string; protectedUrl?: string; email?: string };
@@ -60,9 +67,37 @@ export async function POST(request: NextRequest) {
 
     const stripe = getStripe();
     const env = getRequestContext().env as Record<string, unknown>;
-    const appUrl = (env.NEXT_PUBLIC_APP_URL as string) || "https://vibepay.pages.dev";
+    const db = env.DB as D1Database;
+    const appUrl = (env.NEXT_PUBLIC_APP_URL as string) || "https://vibepay.io";
 
-    // Create Stripe Connect account
+    // Check if this email already has a verified Stripe account
+    if (email?.trim()) {
+      const existingSeller = await db
+        .prepare("SELECT * FROM sellers WHERE email = ?")
+        .bind(email.trim().toLowerCase())
+        .first<Seller>();
+
+      if (existingSeller) {
+        // Verify the account still exists and is ready in Stripe
+        try {
+          const account = await stripe.accounts.retrieve(existingSeller.stripe_account_id);
+          if (account.details_submitted) {
+            // Account is ready - skip onboarding entirely!
+            const encodedFormData = encodeURIComponent(JSON.stringify(formData));
+            return NextResponse.json({
+              url: `${appUrl}/api/callback?account_id=${existingSeller.stripe_account_id}&form=${encodedFormData}`,
+              returning: true
+            });
+          }
+        } catch (err) {
+          // Account doesn't exist in Stripe anymore, remove from our DB
+          console.log("Removing stale seller record:", err);
+          await db.prepare("DELETE FROM sellers WHERE id = ?").bind(existingSeller.id).run();
+        }
+      }
+    }
+
+    // No existing account - create a new Stripe Connect account
     const account = await stripe.accounts.create({
       type: "standard",
       email: email?.trim() || undefined,
