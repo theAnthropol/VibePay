@@ -198,7 +198,7 @@ export default function Home() {
 
             <div>
               <label className="block text-sm text-white/60 mb-2">
-                Price (USD) — $0.99 to $10,000
+                Price (USD)
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
@@ -209,13 +209,17 @@ export default function Home() {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="10.00"
-                  min="0.99"
                   max="10000"
                   step="0.01"
                   className="input-field pl-8"
-                  required
                 />
               </div>
+              {price && priceNum < 0.99 && (
+                <p className="text-xs text-red-400 mt-1">Price must be at least $0.99</p>
+              )}
+              {price && priceNum > 10000 && (
+                <p className="text-xs text-red-400 mt-1">Price must be $10,000 or less</p>
+              )}
             </div>
 
             <div>
@@ -278,7 +282,7 @@ export default function Home() {
 
             <div>
               <label className="block text-sm text-white/60 mb-2">
-                Your email (optional) — for Stripe notifications
+                Your email (optional) — shown to buyers for support
               </label>
               <input
                 type="email"
@@ -287,6 +291,9 @@ export default function Home() {
                 placeholder="you@example.com"
                 className="input-field"
               />
+              <p className="text-xs text-white/30 mt-1">
+                Buyers can contact you about issues with their purchase
+              </p>
             </div>
 
             {/* Fee Calculator */}
