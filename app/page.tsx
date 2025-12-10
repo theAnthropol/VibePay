@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 
 export default function Home() {
@@ -14,6 +14,15 @@ export default function Home() {
   const [error, setError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+  // Mouse tracking for interactive glass effect
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    e.currentTarget.style.setProperty('--mouse-x', `${x}%`);
+    e.currentTarget.style.setProperty('--mouse-y', `${y}%`);
+  }, []);
 
   // Check if user has already accepted cookies
   useEffect(() => {
@@ -100,6 +109,9 @@ export default function Home() {
           <Link href="/privacy" className="hover:text-white">
             Privacy
           </Link>
+          <Link href="/dmca" className="hover:text-white">
+            DMCA
+          </Link>
         </nav>
       </header>
 
@@ -169,9 +181,24 @@ export default function Home() {
               <p className="text-white/60 text-lg">
                 Create, link, get paid.
               </p>
+              <p className="text-white/40 text-sm mt-2">
+                Powered by{" "}
+                <a
+                  href="https://stripe.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/60 hover:text-white"
+                >
+                  Stripe
+                </a>
+              </p>
             </div>
 
-            {/* Form */}
+            {/* Form with Interactive Glass Effect */}
+          <div
+            className="card glass-interactive"
+            onMouseMove={handleMouseMove}
+          >
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="alert-error px-4 py-3 text-sm" role="alert">
@@ -360,6 +387,7 @@ export default function Home() {
               First time users are redirected to Stripe to connect your account.
             </p>
           </form>
+          </div>
           </div>
         </div>
       </div>
