@@ -47,10 +47,9 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+        // Log payment completion without PII (customer email omitted for privacy)
         console.log("Payment completed:", {
           sessionId: session.id,
-          amount: session.amount_total,
-          customerEmail: session.customer_details?.email,
         });
         break;
       }

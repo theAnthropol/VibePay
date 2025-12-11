@@ -1,7 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
+
+// Helper to detect Google URLs that may expose account info
+const isGoogleUrl = (url: string): boolean => {
+  const lower = url.toLowerCase();
+  return (
+    lower.includes("drive.google.com") ||
+    lower.includes("docs.google.com") ||
+    lower.includes("sheets.google.com") ||
+    lower.includes("slides.google.com") ||
+    lower.includes("forms.google.com")
+  );
+};
 
 export default function Home() {
   const [name, setName] = useState("");
@@ -14,6 +26,11 @@ export default function Home() {
   const [error, setError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+  // Check for Google URLs that may expose seller info
+  const showGoogleWarning = useMemo(() => {
+    return isGoogleUrl(destinationUrl) || (useProtection && isGoogleUrl(protectedUrl));
+  }, [destinationUrl, protectedUrl, useProtection]);
 
   // Mouse tracking for interactive glass effect
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -343,6 +360,27 @@ export default function Home() {
                 <div className="border-t border-white/10 pt-2 flex justify-between font-bold">
                   <span>You get</span>
                   <span className="text-accent">${youGet.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Google URL Privacy Warning */}
+            {showGoogleWarning && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                <div className="flex gap-3">
+                  <span className="text-yellow-500 text-lg flex-shrink-0">&#9888;</span>
+                  <div className="text-sm">
+                    <p className="text-yellow-200 font-medium mb-1">Privacy Notice: Google Link Detected</p>
+                    <p className="text-yellow-200/70">
+                      Google Drive/Docs links may reveal your account name or email to buyers.
+                      For better privacy, consider using{" "}
+                      <a href="https://www.dropbox.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-200">Dropbox</a>,{" "}
+                      <a href="https://mega.nz" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-200">Mega</a>, or a direct file hosting service.
+                    </p>
+                    <p className="text-yellow-200/50 text-xs mt-2">
+                      If using Google Drive, ensure your sharing settings don&apos;t expose your identity.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

@@ -47,17 +47,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // URL validation helper - prevents javascript: and data: URLs
+    // URL validation helper - prevents dangerous URLs with proper parsing
     const isValidUrl = (url: string | undefined): boolean => {
       if (!url || typeof url !== "string") return false;
-      const trimmed = url.trim().toLowerCase();
-      // Only allow http and https protocols
-      if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) return false;
-      // Block javascript: and data: injection attempts
-      if (trimmed.includes("javascript:") || trimmed.includes("data:")) return false;
+
       // URL length limit (2048 is standard browser limit)
       if (url.length > 2048) return false;
-      return true;
+
+      try {
+        const parsed = new URL(url.trim());
+
+        // Only allow http and https protocols
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+
+        // Block dangerous schemes anywhere in URL (case-insensitive)
+        const lower = url.toLowerCase();
+        const dangerous = ["javascript:", "data:", "vbscript:", "file:"];
+        if (dangerous.some(scheme => lower.includes(scheme))) return false;
+
+        // Block URLs with encoded dangerous characters (%00 null byte, %0a/%0d newlines)
+        if (/%00|%0a|%0d/i.test(url)) return false;
+
+        return true;
+      } catch {
+        // URL constructor throws on invalid URLs
+        return false;
+      }
     };
 
     if (!destinationUrl || !isValidUrl(destinationUrl)) {
@@ -139,7 +154,7 @@ export async function POST(request: NextRequest) {
 
         if (existingAccount) {
           // Found existing account in Stripe! Save it and use it
-          console.log("Found existing Stripe account for email:", normalizedEmail);
+          console.log("Found existing Stripe account, reusing");
 
           // Save to our DB for future
           try {

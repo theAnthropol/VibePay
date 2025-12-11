@@ -10,6 +10,20 @@ interface Product {
   is_active: number;
 }
 
+// Helper to build CORS headers - uses requesting origin for better security
+const getCorsHeaders = (request: NextRequest) => {
+  const origin = request.headers.get("origin");
+  return {
+    // Reflect the requesting origin if present, otherwise allow all (for direct browser access)
+    // This is needed for embed scripts to work from any website
+    "Access-Control-Allow-Origin": origin || "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    // Prevent caching of CORS headers across different origins
+    "Vary": "Origin",
+  };
+};
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -20,7 +34,7 @@ export async function GET(
     if (!productId) {
       return NextResponse.json(
         { error: "Product ID is required" },
-        { status: 400 }
+        { status: 400, headers: getCorsHeaders(request) }
       );
     }
 
@@ -35,28 +49,28 @@ export async function GET(
     if (!product) {
       return NextResponse.json(
         { error: "Product not found" },
-        { status: 404 }
+        { status: 404, headers: getCorsHeaders(request) }
       );
     }
 
     if (!product.is_active) {
       return NextResponse.json(
         { error: "Product is not active" },
-        { status: 404 }
+        { status: 404, headers: getCorsHeaders(request) }
       );
     }
 
     // Return product info for embed (price in cents for consistency)
+    // Only expose minimal data needed for embed functionality
     return NextResponse.json({
       id: product.id,
       name: product.name,
       price: product.price_in_cents,
     }, {
       headers: {
-        // Allow CORS for embed script
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET',
-        'Cache-Control': 'public, max-age=60', // Cache for 1 minute
+        ...getCorsHeaders(request),
+        "Cache-Control": "public, max-age=60", // Cache for 1 minute
+        "X-Content-Type-Options": "nosniff",
       }
     });
   } catch (error) {
@@ -69,12 +83,9 @@ export async function GET(
 }
 
 // Handle CORS preflight
-export async function OPTIONS() {
+export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    }
+    status: 204,
+    headers: getCorsHeaders(request),
   });
 }

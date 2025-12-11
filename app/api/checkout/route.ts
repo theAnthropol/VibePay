@@ -5,6 +5,24 @@ import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
+// Validate returnUrl to prevent open redirect attacks
+const isValidReturnUrl = (url: string | undefined): boolean => {
+  if (!url || typeof url !== "string") return false;
+  try {
+    const parsed = new URL(url);
+    // Only allow http/https protocols
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+    // Block javascript: and data: in any part of the URL
+    const lower = url.toLowerCase();
+    if (lower.includes("javascript:") || lower.includes("data:") || lower.includes("vbscript:")) return false;
+    // URL length limit
+    if (url.length > 2048) return false;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as { productId?: string; returnUrl?: string };
@@ -13,6 +31,14 @@ export async function POST(request: NextRequest) {
     if (!productId) {
       return NextResponse.json(
         { error: "Product ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate returnUrl if provided to prevent open redirect
+    if (returnUrl && !isValidReturnUrl(returnUrl)) {
+      return NextResponse.json(
+        { error: "Invalid return URL" },
         { status: 400 }
       );
     }
